@@ -1,0 +1,21 @@
+{
+  "name": "DOTIK Kartoteka",
+  "short_name": "DOTIK",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7fbfa",
+  "theme_color": "#0f6f64",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "description": "Šifrirana lokalna kartoteka DOTIK za iPad"
+}

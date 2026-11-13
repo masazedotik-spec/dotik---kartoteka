@@ -1,0 +1,22 @@
+DOTIK KARTOTEKA v3.0 – iPad Offline, lokalno šifrirano
+
+Varnost:
+- kartoteke so šifrirane z AES-256-GCM,
+- ključ se izpelje iz glavnega gesla s PBKDF2/SHA-256,
+- glavno geslo in PIN se ne hranita kot navadno besedilo,
+- samodejni zaklep po 5 minutah,
+- šifrirana JSON varnostna kopija,
+- podatki kartotek ostanejo v IndexedDB na napravi.
+
+Ikona:
+Uporabljen je originalni beli DOTIK logotip.
+
+iPad:
+Za ikono in polno PWA/offline delovanje mora biti aplikacija prvič servirana prek HTTPS.
+V Safariju: Deli > Dodaj na začetni zaslon. HTTPS gosti kodo aplikacije; kartoteke ostanejo
+lokalno na iPadu.
+
+Pomembno:
+Če pozabite glavno geslo, šifriranih podatkov ni mogoče obnoviti. Varnostne kopije hranite
+na varnem šifriranem mediju. Pred produkcijsko uporabo z resničnimi zdravstvenimi podatki
+je priporočljiv strokovni varnostni/GDPR pregled in preverjanje pravil hrambe dokumentacije.

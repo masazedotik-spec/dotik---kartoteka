@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="sl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DOTIK Kartoteka v3.0 Šifrirano</title>
+<style>
+:root{--g:#087f73;--gd:#075e57;--o:#ef7f61;--bg:#f4f7f6;--card:#fff;--txt:#16302d;--mut:#6c7d7a;--line:#dce6e3}
+*{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--txt)}
+header{background:var(--g);color:#fff;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.brand{font-size:24px;font-weight:800}.brand small{display:block;font-size:12px;font-weight:400;opacity:.85;margin-top:3px}
+.wrap{max-width:1180px;margin:24px auto;padding:0 18px}.grid{display:grid;grid-template-columns:340px 1fr;gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 5px 18px rgba(0,0,0,.04)}
+h2,h3{margin-top:0}.row{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}.primary{background:var(--g);color:#fff}.accent{background:var(--o);color:#fff}.ghost{background:#e8f1ef;color:var(--gd)}
+input,textarea,select{width:100%;padding:10px 11px;border:1px solid #cddbd8;border-radius:9px;font:inherit;background:#fff}textarea{min-height:86px;resize:vertical}label{display:block;font-size:13px;font-weight:700;margin:12px 0 5px}.search{margin-bottom:12px}.patient{padding:12px;border:1px solid var(--line);border-radius:10px;margin:8px 0;cursor:pointer}.patient:hover,.patient.active{border-color:var(--g);background:#eef7f5}.muted{color:var(--mut);font-size:13px}.empty{padding:30px;text-align:center;color:var(--mut)}
+.visit{border-left:4px solid var(--g);padding:12px 14px;background:#f7fbfa;border-radius:8px;margin:12px 0}.visit strong{display:block;margin-bottom:6px}.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}.notice{background:#fff3e9;border:1px solid #f6c8a9;padding:10px 12px;border-radius:10px;font-size:13px;color:#7b4a2f}.hide{display:none}
+.bodychart-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px}
+.bodychart{position:relative;background:#f7fbfa;border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center}
+.bodychart svg{width:100%;max-width:230px;height:360px;touch-action:none;cursor:crosshair}
+.bodychart .label{font-weight:700;font-size:13px;margin-bottom:4px}
+.pain-dot{stroke:#fff;stroke-width:2}
+.mark-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.mark-tool{border:2px solid transparent;border-radius:999px;padding:8px 12px;background:#fff;cursor:pointer;font-weight:700;font-size:13px}
+.mark-tool.active{border-color:#183f39;box-shadow:0 0 0 2px #fff,0 0 0 4px #183f39}
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin:8px 0}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px}
+.chart-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.chart-note{font-size:12px;color:var(--mut)}
+.saved-chart{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.saved-chart svg{width:100%;height:180px;background:#fff;border:1px solid var(--line);border-radius:10px}
+@media(max-width:600px){.bodychart-wrap{grid-template-columns:1fr}.saved-chart{grid-template-columns:1fr 1fr}}
+@media(max-width:820px){.grid{grid-template-columns:1fr}.two{grid-template-columns:1fr}}
+
+.local-banner{background:#eef8f5;border:1px solid #b8d8d1;border-radius:12px;padding:10px 12px;margin:10px 0;font-size:13px}
+.backup-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.mark-detail{display:grid;grid-template-columns:110px 1fr;gap:8px;margin-top:8px}
+@media(max-width:600px){.mark-detail{grid-template-columns:1fr}}
+
+.lock-screen{position:fixed;inset:0;z-index:9999;background:#0f6f64;display:flex;align-items:center;justify-content:center;padding:24px}
+.lock-card{background:#fff;width:min(430px,100%);border-radius:24px;padding:28px;box-shadow:0 20px 60px #0004;text-align:center}
+.lock-logo{width:92px;height:92px;border-radius:22px;margin:0 auto 14px;display:block}
+.lock-card h1{margin:5px 0;color:#173f39}.lock-card p{color:#61746f;font-size:14px}
+.lock-card input{width:100%;box-sizing:border-box;margin:6px 0 10px;padding:13px;border:1px solid #cddbd8;border-radius:10px;font-size:16px}
+.lock-card .btn{width:100%;margin-top:6px}.lock-error{color:#b42318;min-height:20px;font-size:13px}
+.security-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+</head>
+<body>
+<div id="lockScreen" class="lock-screen">
+ <div class="lock-card">
+   <img src="icon-192.png" class="lock-logo" alt="DOTIK">
+   <h1>DOTIK Kartoteka</h1>
+   <div id="setupBox" style="display:none">
+     <p>Prva nastavitev. Določi glavno geslo in 6-mestni PIN.</p>
+     <input id="setupPassword" type="password" autocomplete="new-password" placeholder="Glavno geslo (najmanj 10 znakov)">
+     <input id="setupPassword2" type="password" autocomplete="new-password" placeholder="Ponovi glavno geslo">
+     <input id="setupPin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" placeholder="6-mestni PIN">
+     <button class="btn" type="button" onclick="createSecurity()">Nastavi zaščito</button>
+   </div>
+   <div id="unlockBox" style="display:none">
+     <p>Odkleni s PIN-om ali glavnim geslom.</p>
+     <input id="unlockValue" type="password" autocomplete="current-password" placeholder="PIN ali glavno geslo">
+     <button class="btn" type="button" onclick="unlockApp()">Odkleni</button>
+   </div>
+   <div id="lockError" class="lock-error"></div>
+ </div>
+</div>
+<header><div class="brand">DOTIK <small>Kartoteka v3.0 · šifrirano · iPad Offline</small></div><div>Jernej Švab s.p.</div></header>
+<div class="wrap">
+<div class="notice"><b>DEMO:</b> Ta prototip podatke hrani samo v brskalniku in še ni namenjen resničnim zdravstvenim podatkom. Uporabi izmišljene testne osebe.</div>
+<br>
+<div class="grid">
+<aside class="card">
+<div class="row" style="justify-content:space-between;align-items:center"><h2>Stranke</h2><button class="btn primary" onclick="showNewPatient()">+ Nova</button></div>
+<input id="search" class="search" placeholder="Poišči stranko ..." oninput="renderPatients()">
+<div id="patients"></div>
+</aside>
+<main><div class="local-banner"><b>🔒 Samo na napravi:</b> kartoteke se hranijo lokalno v podatkovni bazi IndexedDB. Aplikacija sama podatkov ne pošilja v cloud. Za iPad jo odpri v Safariju in izberi <b>Deli → Add to Home Screen / Dodaj na začetni zaslon</b>. Redno izvozi varnostno kopijo in jo shrani na varen šifriran medij.</div>
+<div class="security-row">
+<button type="button" class="btn ghost" onclick="lockApp()">🔒 Zakleni zdaj</button>
+<span class="chart-note">Samodejni zaklep po 5 minutah neaktivnosti.</span>
+</div>
+<div class="backup-row">
+<button type="button" class="btn ghost" onclick="exportBackup()">⬇ Izvozi varnostno kopijo</button>
+<label class="btn ghost" style="cursor:pointer">⬆ Uvozi varnostno kopijo<input id="backupFile" type="file" accept=".json,application/json" style="display:none"></label>
+</div>
+<section id="welcome" class="card"><div class="empty"><h2>DOTIK Kartoteka</h2><p>Izberi stranko ali ustvari novo kartoteko.</p></div></section>
+<section id="newPatient" class="card hide">
+<h2>Nova stranka</h2>
+<div class="two"><div><label>Ime</label><input id="npName"></div><div><label>Priimek</label><input id="npSurname"></div></div>
+<div class="two"><div><label>Telefon</label><input id="npPhone"></div><div><label>E-pošta</label><input id="npEmail"></div></div>
+<label>Glavna težava / razlog obiska</label><textarea id="npProblem"></textarea>
+<label>Opombe / pomembne informacije</label><textarea id="npNotes"></textarea>
+<div class="row" style="margin-top:14px"><button class="btn primary" onclick="savePatient()">Shrani stranko</button><button class="btn ghost" onclick="cancelNew()">Prekliči</button></div>
+</section>
+<section id="detail" class="hide">
+<div class="card"><div class="row" style="justify-content:space-between"><div><h2 id="pTitle"></h2><div id="pMeta" class="muted"></div></div><button class="btn accent" onclick="showVisit()">+ Nov obisk</button></div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>Osnovna kartoteka</h3><p><b>Glavna težava:</b> <span id="pProblem"></span></p><p><b>Opombe:</b> <span id="pNotes"></span></p></div>
+<div id="visitForm" class="card hide" style="margin-top:18px"><h3>Nov obisk</h3>
+<div class="two"><div><label>Datum</label><input id="vDate" type="date"></div><div><label>Bolečina NRS 0–10</label><input id="vPain" type="number" min="0" max="10"></div></div>
+
+<h3 style="margin-top:20px">Body chart – mesto bolečine</h3>
+<div class="chart-note">Izberi vrsto težave in nato klikni na mesto na telesu.</div>
+<div class="mark-tools">
+<button type="button" class="mark-tool active" data-type="pain" onclick="setMarkType('pain')">🔴 Bolečina</button>
+<button type="button" class="mark-tool" data-type="tension" onclick="setMarkType('tension')">🟠 Napetost</button>
+<button type="button" class="mark-tool" data-type="sensory" onclick="setMarkType('sensory')">🔵 Mravljinčenje / občutek</button>
+<button type="button" class="mark-tool" data-type="other" onclick="setMarkType('other')">🟣 Druga težava</button>
+</div>
+<div class="legend"><span><i style="background:#e53935"></i>Bolečina</span><span><i style="background:#f39c34"></i>Napetost</span><span><i style="background:#3288d1"></i>Mravljinčenje/občutek</span><span><i style="background:#8d58b5"></i>Drugo</span></div>
+<div class="bodychart-wrap">
+  <div class="bodychart"><div class="label">SPREDAJ</div>
+    <svg id="bodyFront" viewBox="0 0 220 420" aria-label="Telo spredaj">
+      <g fill="#dce9e6" stroke="#6f918b" stroke-width="2">
+        <circle cx="110" cy="35" r="24"/>
+        <path d="M91 62 Q110 54 129 62 L145 128 Q137 177 132 216 L126 246 L120 260 L116 276 L104 276 L100 260 L94 246 L88 216 Q82 177 75 128 Z"/>
+        <path d="M78 80 L53 100 L30 190 L44 195 L72 123 Z"/>
+        <path d="M142 80 L167 100 L190 190 L176 195 L148 123 Z"/>
+        <path d="M96 211 L73 286 L72 395 L92 395 L108 276 Z"/>
+        <path d="M124 211 L147 286 L148 395 L128 395 L112 276 Z"/>
+      </g>
+      <g fill="none" stroke="#aac0bc" stroke-width="1.2" pointer-events="none">
+<path d="M88 88 Q110 76 132 88"/><path d="M87 115 Q110 128 133 115"/>
+<path d="M91 143 L129 143"/><path d="M92 168 L128 168"/><path d="M95 193 L125 193"/>
+<circle cx="75" cy="104" r="5"/><circle cx="145" cy="104" r="5"/><circle cx="42" cy="191" r="5"/><circle cx="178" cy="191" r="5"/>
+<circle cx="86" cy="286" r="5"/><circle cx="134" cy="286" r="5"/>
+</g><g id="frontDots"></g>
+    </svg>
+  </div>
+  <div class="bodychart"><div class="label">ZADAJ</div>
+    <svg id="bodyBack" viewBox="0 0 220 420" aria-label="Telo zadaj">
+      <g fill="#dce9e6" stroke="#6f918b" stroke-width="2">
+        <circle cx="110" cy="35" r="24"/>
+        <path d="M91 62 Q110 54 129 62 L145 128 Q137 177 132 216 L126 246 L120 260 L116 276 L104 276 L100 260 L94 246 L88 216 Q82 177 75 128 Z"/>
+        <path d="M78 80 L53 100 L30 190 L44 195 L72 123 Z"/>
+        <path d="M142 80 L167 100 L190 190 L176 195 L148 123 Z"/>
+        <path d="M96 211 L73 286 L72 395 L92 395 L108 276 Z"/>
+        <path d="M124 211 L147 286 L148 395 L128 395 L112 276 Z"/>
+        
+      </g>
+      <g fill="none" stroke="#aac0bc" stroke-width="1.2" pointer-events="none">
+<path d="M93 78 Q110 96 127 78"/><path d="M84 108 Q110 132 136 108"/>
+<path d="M88 130 Q110 151 132 130"/><path d="M90 162 Q110 177 130 162"/><path d="M91 190 Q110 202 129 190"/>
+<path d="M88 222 Q110 242 132 222"/>
+<circle cx="75" cy="104" r="5"/><circle cx="145" cy="104" r="5"/><circle cx="42" cy="191" r="5"/><circle cx="178" cy="191" r="5"/>
+<circle cx="86" cy="286" r="5"/><circle cx="134" cy="286" r="5"/>
+</g><g id="backDots"></g>
+    </svg>
+  </div>
+</div>
+<div class="chart-actions">
+  <button type="button" class="btn ghost" onclick="undoPainDot()">↶ Razveljavi zadnjo</button>
+  <button type="button" class="btn ghost" onclick="clearPainDots()">Počisti oznake</button>
+  <span id="painCount" class="chart-note">0 označenih mest</span>
+</div>
+<div class="mark-detail">
+  <div><label>NRS oznake</label><input id="markNrs" type="number" min="0" max="10" placeholder="0–10"></div>
+  <div><label>Opis označene težave</label><input id="markDesc" placeholder="npr. ostra bolečina, pekoča, zategovanje ..."></div>
+</div>
+<div class="chart-note">NRS in opis se uporabita pri naslednjem kliku na telo.</div>
+
+<label>Subjektivno / stanje danes</label><textarea id="vSubjective" placeholder="Kaj stranka pove, spremembe od zadnjič ..."></textarea>
+<label>Objektivni pregled / ugotovitve</label><textarea id="vObjective" placeholder="Gibljivost, provokacijski testi, palpacija ..."></textarea>
+<label>Izvedena terapija</label><textarea id="vTreatment" placeholder="Manualna terapija, mobilizacija, LLLT, vaje ..."></textarea>
+<label>Odziv po terapiji</label><textarea id="vResponse"></textarea>
+<label>Plan / naslednji obisk</label><textarea id="vPlan"></textarea>
+<div class="row" style="margin-top:14px"><button class="btn primary" onclick="saveVisit()">Shrani obisk</button><button class="btn ghost" onclick="hideVisit()">Prekliči</button></div></div>
+<div class="card" style="margin-top:18px"><h3>Zgodovina obravnav</h3><div id="visits"></div></div>
+</section>
+</main></div></div>
+<script>
+
+const KEY='dotik_demo_v1';
+const DB_NAME='DOTIK_Kartoteka_DB', STORE='appdata';
+let data={patients:[]}, selected=null, currentPainMarks=[], currentMarkType='pain';
+let sessionKey=null, sessionPassword=null, idleTimer;
+
+function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open(DB_NAME,2);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE)};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+async function dbGet(k){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE,'readonly');const r=tx.objectStore(STORE).get(k);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function dbSet(k,v){const db=await openDB();return new Promise((res,rej)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(v,k);tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error)})}
+const enc=new TextEncoder(), dec=new TextDecoder();
+function b64(bytes){let s='';bytes.forEach(b=>s+=String.fromCharCode(b));return btoa(s)}
+function unb64(s){return Uint8Array.from(atob(s),c=>c.charCodeAt(0))}
+async function passwordKey(password,salt,iterations=310000){
+ const base=await crypto.subtle.importKey('raw',enc.encode(password),'PBKDF2',false,['deriveKey']);
+ return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+async function hashSecret(secret,saltB64){
+ const salt=saltB64?unb64(saltB64):crypto.getRandomValues(new Uint8Array(16));
+ const base=await crypto.subtle.importKey('raw',enc.encode(secret),'PBKDF2',false,['deriveBits']);
+ const bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:210000,hash:'SHA-256'},base,256);
+ return {salt:b64(salt),hash:b64(new Uint8Array(bits))};
+}
+async function verifySecret(secret,rec){const v=await hashSecret(secret,rec.salt);return v.hash===rec.hash}
+async function encryptObject(obj,key){
+ const iv=crypto.getRandomValues(new Uint8Array(12));
+ const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(obj)));
+ return {v:1,alg:'AES-256-GCM',iv:b64(iv),ciphertext:b64(new Uint8Array(ct))};
+}
+async function decryptObject(blob,key){
+ const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(blob.iv)},key,unb64(blob.ciphertext));
+ return JSON.parse(dec.decode(pt));
+}
+async function persist(){
+ if(!sessionKey)return;
+ const encrypted=await encryptObject(data,sessionKey);
+ await dbSet('encryptedData',encrypted);
+}
+async function createSecurity(){
+ const pw=setupPassword.value,pw2=setupPassword2.value,pin=setupPin.value,err=lockError;
+ if(pw.length<10){err.textContent='Geslo naj ima najmanj 10 znakov.';return}
+ if(pw!==pw2){err.textContent='Gesli se ne ujemata.';return}
+ if(!/^\d{6}$/.test(pin)){err.textContent='PIN mora imeti 6 številk.';return}
+ const salt=crypto.getRandomValues(new Uint8Array(16));
+ sessionKey=await passwordKey(pw,salt); sessionPassword=pw;
+ const ph=await hashSecret(pw), nh=await hashSecret(pin);
+ await dbSet('security',{password:ph,pin:nh,kdfSalt:b64(salt),kdfIterations:310000});
+ let legacy=null; try{legacy=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+ if(legacy&&Array.isArray(legacy.patients))data=legacy;
+ await persist();
+ setupPassword.value=setupPassword2.value=setupPin.value='';err.textContent='';
+ unlockSession();renderPatients();
+}
+async function unlockApp(){
+ const value=unlockValue.value,err=lockError,sec=await dbGet('security');
+ if(!sec){await initSecurity();return}
+ let pw=null;
+ if(await verifySecret(value,sec.password)) pw=value;
+ else if(await verifySecret(value,sec.pin)){
+   err.textContent='Za popoln ponovni zagon po zaklepu uporabi glavno geslo. PIN je za hitro odklepanje v isti seji.';
+   if(sessionKey){err.textContent='';unlockValue.value='';unlockSession();return}
+   return;
+ } else {err.textContent='Napačen PIN ali geslo.';return}
+ try{
+   const key=await passwordKey(pw,unb64(sec.kdfSalt),sec.kdfIterations||310000);
+   const encrypted=await dbGet('encryptedData');
+   data=encrypted?await decryptObject(encrypted,key):{patients:[]};
+   sessionKey=key;sessionPassword=pw;unlockValue.value='';err.textContent='';unlockSession();renderPatients();
+ }catch(e){err.textContent='Podatkov ni bilo mogoče dešifrirati.'}
+}
+function unlockSession(){lockScreen.style.display='none';resetIdle()}
+function lockApp(hard=false){
+ lockScreen.style.display='flex';unlockBox.style.display='block';setupBox.style.display='none';
+ if(hard){sessionKey=null;sessionPassword=null;data={patients:[]};selected=null}
+}
+function resetIdle(){clearTimeout(idleTimer);if(lockScreen.style.display==='none')idleTimer=setTimeout(()=>lockApp(false),5*60*1000)}
+['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,resetIdle,{passive:true}));
+document.addEventListener('visibilitychange',()=>{if(document.hidden)lockApp(false)});
+async function initSecurity(){
+ const sec=await dbGet('security');
+ setupBox.style.display=sec?'none':'block';unlockBox.style.display=sec?'block':'none';
+}
+async function exportBackup(){
+ if(!sessionPassword||!sessionKey){alert('Za šifrirano varnostno kopijo aplikacijo najprej odkleni z glavnim geslom.');return}
+ await persist();
+ const encrypted=await dbGet('encryptedData'),sec=await dbGet('security');
+ const payload={app:'DOTIK Kartoteka',version:'3.0',encrypted:true,security:{kdfSalt:sec.kdfSalt,kdfIterations:sec.kdfIterations,password:sec.password,pin:sec.pin},data:encrypted};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DOTIK_SIFRIRAN_backup_'+new Date().toISOString().slice(0,10)+'.json';
+ document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+document.getElementById('backupFile')?.addEventListener('change',async function(e){
+ const f=e.target.files?.[0];if(!f)return;
+ try{
+  const obj=JSON.parse(await f.text());
+  if(!obj.encrypted||!obj.data||!obj.security)throw new Error();
+  if(!confirm('Uvoz bo zamenjal trenutne lokalne kartoteke. Nadaljujem?'))return;
+  await dbSet('security',obj.security);await dbSet('encryptedData',obj.data);
+  sessionKey=null;sessionPassword=null;data={patients:[]};lockApp(true);
+  alert('Šifrirana varnostna kopija je uvožena. Odkleni jo z glavnim geslom, s katerim je bila ustvarjena.');
+ }catch(e){alert('To ni veljavna šifrirana DOTIK varnostna kopija.')}
+ this.value='';
+});
+
+function renderPatients(){let q=document.getElementById('search').value.toLowerCase();let list=data.patients.filter(p=>(p.name+' '+p.surname).toLowerCase().includes(q));document.getElementById('patients').innerHTML=list.length?list.map(p=>`<div class="patient ${selected===p.id?'active':''}" onclick="selectPatient('${p.id}')"><b>${esc(p.name)} ${esc(p.surname)}</b><div class="muted">${esc(p.problem||'Brez opisa')}</div></div>`).join(''):'<div class="empty">Ni strank.</div>'}
+function showNewPatient(){document.getElementById('welcome').classList.add('hide');document.getElementById('detail').classList.add('hide');document.getElementById('newPatient').classList.remove('hide')}
+function cancelNew(){document.getElementById('newPatient').classList.add('hide');document.getElementById(selected?'detail':'welcome').classList.remove('hide')}
+function savePatient(){let name=npName.value.trim(),surname=npSurname.value.trim();if(!name||!surname)return alert('Vpiši ime in priimek.');let p={id:Date.now().toString(),name,surname,phone:npPhone.value.trim(),email:npEmail.value.trim(),problem:npProblem.value.trim(),notes:npNotes.value.trim(),visits:[]};data.patients.push(p);persist();['npName','npSurname','npPhone','npEmail','npProblem','npNotes'].forEach(id=>document.getElementById(id).value='');selectPatient(p.id);renderPatients()}
+function selectPatient(id){selected=id;let p=data.patients.find(x=>x.id===id);document.getElementById('welcome').classList.add('hide');document.getElementById('newPatient').classList.add('hide');document.getElementById('detail').classList.remove('hide');pTitle.textContent=p.name+' '+p.surname;pMeta.textContent=[p.phone,p.email].filter(Boolean).join(' · ');pProblem.textContent=p.problem||'—';pNotes.textContent=p.notes||'—';hideVisit();renderVisits();renderPatients()}
+function showVisit(){visitForm.classList.remove('hide');vDate.value=new Date().toISOString().slice(0,10);currentPainMarks=[];renderPainMarks()} function hideVisit(){visitForm.classList.add('hide');currentPainMarks=[];renderPainMarks()}
+function saveVisit(){let p=data.patients.find(x=>x.id===selected);let v={id:Date.now().toString(),date:vDate.value,pain:vPain.value,subjective:vSubjective.value.trim(),objective:vObjective.value.trim(),treatment:vTreatment.value.trim(),response:vResponse.value.trim(),plan:vPlan.value.trim(),painMarks:currentPainMarks.map(m=>({...m}))};if(!v.date||!v.treatment)return alert('Vpiši datum in izvedeno terapijo.');p.visits.unshift(v);persist();['vPain','vSubjective','vObjective','vTreatment','vResponse','vPlan'].forEach(id=>document.getElementById(id).value='');hideVisit();renderVisits()}
+function renderVisits(){let p=data.patients.find(x=>x.id===selected);visits.innerHTML=p.visits.length?p.visits.map(v=>`<div class="visit"><strong>${esc(v.date)}${v.pain!==''?' · NRS '+esc(v.pain)+'/10':''}</strong>${v.painMarks&&v.painMarks.length?`<div class="saved-chart"><div>${painSvg('front',v.painMarks)}<div class="muted" style="text-align:center">Spredaj</div></div><div>${painSvg('back',v.painMarks)}<div class="muted" style="text-align:center">Zadaj</div></div></div>`:''}${v.subjective?'<p><b>Stanje:</b> '+esc(v.subjective)+'</p>':''}${v.objective?'<p><b>Pregled:</b> '+esc(v.objective)+'</p>':''}<p><b>Terapija:</b> ${esc(v.treatment)}</p>${v.response?'<p><b>Odziv:</b> '+esc(v.response)+'</p>':''}${v.plan?'<p><b>Plan:</b> '+esc(v.plan)+'</p>':''}</div>`).join(''):'<div class="empty">Za to stranko še ni zabeleženih obiskov.</div>'}
+
+const markColors={pain:'#e53935',tension:'#f39c34',sensory:'#3288d1',other:'#8d58b5'};
+function setMarkType(type){currentMarkType=type;document.querySelectorAll('.mark-tool').forEach(b=>b.classList.toggle('active',b.dataset.type===type));}
+function addPainMark(side, svg, evt){
+  const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+  const p=pt.matrixTransform(svg.getScreenCTM().inverse());
+  currentPainMarks.push({side:side,x:+p.x.toFixed(1),y:+p.y.toFixed(1),type:currentMarkType,
+nrs:(document.getElementById('markNrs')?.value||''),description:(document.getElementById('markDesc')?.value||'')});
+  renderPainMarks();
+}
+function renderPainMarks(){
+  ['front','back'].forEach(side=>{
+    const g=document.getElementById(side==='front'?'frontDots':'backDots');
+    if(!g)return;
+    g.innerHTML=currentPainMarks.filter(m=>m.side===side).map(m=>`<circle class="pain-dot" cx="${m.x}" cy="${m.y}" r="7" fill="${markColors[m.type||"pain"]}"><title>${(m.description||"")}${m.nrs!==""?" · NRS "+m.nrs+"/10":""}</title></circle>`).join('');
+  });
+  const c=document.getElementById('painCount'); if(c)c.textContent=currentPainMarks.length+' označenih mest';
+}
+function undoPainDot(){currentPainMarks.pop();renderPainMarks()}
+function clearPainDots(){currentPainMarks=[];renderPainMarks()}
+function painSvg(side,marks){
+  const spine=side==='back'?'':'';
+  const dots=(marks||[]).filter(m=>m.side===side).map(m=>`<circle cx="${m.x}" cy="${m.y}" r="7" fill="${markColors[m.type||"pain"]}" stroke="#fff" stroke-width="2"><title>${(m.description||"")}${m.nrs!==""?" · NRS "+m.nrs+"/10":""}</title></circle>`).join('');
+  return `<svg viewBox="0 0 220 420"><g fill="#dce9e6" stroke="#6f918b" stroke-width="2"><circle cx="110" cy="35" r="24"/><path d="M91 62 Q110 54 129 62 L145 128 Q137 177 132 216 L126 246 L120 260 L116 276 L104 276 L100 260 L94 246 L88 216 Q82 177 75 128 Z"/><path d="M78 80 L53 100 L30 190 L44 195 L72 123 Z"/><path d="M142 80 L167 100 L190 190 L176 195 L148 123 Z"/><path d="M96 211 L73 286 L72 395 L92 395 L108 276 Z"/><path d="M124 211 L147 286 L148 395 L128 395 L112 276 Z"/>${spine}</g>${dots}</svg>`;
+}
+document.getElementById('bodyFront').addEventListener('click',e=>addPainMark('front',document.getElementById('bodyFront'),e));
+document.getElementById('bodyBack').addEventListener('click',e=>addPainMark('back',document.getElementById('bodyBack'),e));
+
+
+
+initSecurity();
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
+
+</script>
+</body></html>

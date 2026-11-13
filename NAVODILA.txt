@@ -1,22 +1,10 @@
-DOTIK KARTOTEKA v3.0 – iPad Offline, lokalno šifrirano
+DOTIK Kartoteka v3.3 – TESTNA različica za preverjanje shranjevanja
 
-Varnost:
-- kartoteke so šifrirane z AES-256-GCM,
-- ključ se izpelje iz glavnega gesla s PBKDF2/SHA-256,
-- glavno geslo in PIN se ne hranita kot navadno besedilo,
-- samodejni zaklep po 5 minutah,
-- šifrirana JSON varnostna kopija,
-- podatki kartotek ostanejo v IndexedDB na napravi.
+1. ZIP razširi in vseh 7 datotek naloži v glavno mapo istega GitHub repozitorija. Ne naloži ZIP kot eno datoteko.
+2. Na GitHubu klikni index.html in preveri, da naslov vsebuje v3.3. Počakaj na zeleno objavo GitHub Pages.
+3. Najprej preveri različico na računalniku, nato na iPadu. iPad lahko zaradi predpomnilnika še kaže staro različico.
+4. Ne briši nameščene aplikacije ali podatkov brskalnika. Po ponovnem zagonu uporabi GLAVNO GESLO.
+5. Ustvari izmišljenega pacienta. Preveri napis 'Preverjeno shranjeno v lokalno bazo', zapri in ponovno odpri.
+6. Varnostno kopijo preveri z obnovitvijo v LOČENEM testnem okolju, ne čez obstoječe podatke.
 
-Ikona:
-Uporabljen je originalni beli DOTIK logotip.
-
-iPad:
-Za ikono in polno PWA/offline delovanje mora biti aplikacija prvič servirana prek HTTPS.
-V Safariju: Deli > Dodaj na začetni zaslon. HTTPS gosti kodo aplikacije; kartoteke ostanejo
-lokalno na iPadu.
-
-Pomembno:
-Če pozabite glavno geslo, šifriranih podatkov ni mogoče obnoviti. Varnostne kopije hranite
-na varnem šifriranem mediju. Pred produkcijsko uporabo z resničnimi zdravstvenimi podatki
-je priporočljiv strokovni varnostni/GDPR pregled in preverjanje pravil hrambe dokumentacije.
+OPOZORILO: To je nerevidiran prototip. Ni primeren za dejanske zdravstvene podatke pacientov. Samodejni test v iPad Safariju ni bil opravljen.

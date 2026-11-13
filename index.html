@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>DOTIK Kartoteka v3.0 Šifrirano</title>
+<title>DOTIK Kartoteka v3.3 Preizkus shranjevanja</title>
 <style>
 :root{--g:#087f73;--gd:#075e57;--o:#ef7f61;--bg:#f4f7f6;--card:#fff;--txt:#16302d;--mut:#6c7d7a;--line:#dce6e3}
 *{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--txt)}
@@ -61,14 +61,14 @@ input,textarea,select{width:100%;padding:10px 11px;border:1px solid #cddbd8;bord
      <button class="btn" type="button" onclick="createSecurity()">Nastavi zaščito</button>
    </div>
    <div id="unlockBox" style="display:none">
-     <p>Odkleni s PIN-om ali glavnim geslom.</p>
+     <p>Po ponovnem zagonu uporabi glavno geslo. PIN deluje med aktivno sejo.</p>
      <input id="unlockValue" type="password" autocomplete="current-password" placeholder="PIN ali glavno geslo">
      <button class="btn" type="button" onclick="unlockApp()">Odkleni</button>
    </div>
    <div id="lockError" class="lock-error"></div>
  </div>
 </div>
-<header><div class="brand">DOTIK <small>Kartoteka v3.0 · šifrirano · iPad Offline</small></div><div>Jernej Švab s.p.</div></header>
+<header><div class="brand">DOTIK <small>Kartoteka v3.3 · šifrirano · iPad Offline</small></div><div>Jernej Švab s.p.</div></header>
 <div class="wrap">
 <div class="notice"><b>DEMO:</b> Ta prototip podatke hrani samo v brskalniku in še ni namenjen resničnim zdravstvenim podatkom. Uporabi izmišljene testne osebe.</div>
 <br>
@@ -76,11 +76,11 @@ input,textarea,select{width:100%;padding:10px 11px;border:1px solid #cddbd8;bord
 <aside class="card">
 <div class="row" style="justify-content:space-between;align-items:center"><h2>Stranke</h2><button class="btn primary" onclick="showNewPatient()">+ Nova</button></div>
 <input id="search" class="search" placeholder="Poišči stranko ..." oninput="renderPatients()">
-<div id="patients"></div>
+<div id="patients"></div><p id="storageStatus" class="muted" role="status" style="font-size:12px;margin-top:12px"></p>
 </aside>
 <main><div class="local-banner"><b>🔒 Samo na napravi:</b> kartoteke se hranijo lokalno v podatkovni bazi IndexedDB. Aplikacija sama podatkov ne pošilja v cloud. Za iPad jo odpri v Safariju in izberi <b>Deli → Add to Home Screen / Dodaj na začetni zaslon</b>. Redno izvozi varnostno kopijo in jo shrani na varen šifriran medij.</div>
 <div class="security-row">
-<button type="button" class="btn ghost" onclick="lockApp()">🔒 Zakleni zdaj</button>
+<button type="button" class="btn ghost" onclick="lockApp()">🔒 Zakleni zdaj (PIN za hitro odklepanje)</button>
 <span class="chart-note">Samodejni zaklep po 5 minutah neaktivnosti.</span>
 </div>
 <div class="backup-row">
@@ -203,16 +203,30 @@ async function decryptObject(blob,key){
  const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(blob.iv)},key,unb64(blob.ciphertext));
  return JSON.parse(dec.decode(pt));
 }
+let writeQueue=Promise.resolve();
+function setStorageStatus(message){const el=document.getElementById('storageStatus');if(el)el.textContent=message}
+async function writeAndVerify(snapshot,key){
+  const encrypted=await encryptObject(snapshot,key);
+  await dbSet('encryptedData',encrypted);
+  const stored=await dbGet('encryptedData');
+  if(!stored || stored.ciphertext!==encrypted.ciphertext || stored.iv!==encrypted.iv)throw new Error('Preverjanje zapisa v bazo ni uspelo.');
+  const check=await decryptObject(stored,key);
+  if(!check || !Array.isArray(check.patients) || JSON.stringify(check)!==JSON.stringify(snapshot))throw new Error('Preverjanje shranjenih podatkov ni uspelo.');
+}
 async function persist(){
- if(!sessionKey)return;
- const encrypted=await encryptObject(data,sessionKey);
- await dbSet('encryptedData',encrypted);
+  if(!sessionKey)throw new Error('Podatkov ni mogoče shraniti brez glavnega gesla.');
+  const snapshot=JSON.parse(JSON.stringify(data)), key=sessionKey;
+  const operation=writeQueue.catch(()=>{}).then(()=>writeAndVerify(snapshot,key));
+  writeQueue=operation;
+  await operation;
+  setStorageStatus('Preverjeno shranjeno v lokalno bazo · pacientov: '+snapshot.patients.length);
 }
 async function createSecurity(){
  const pw=setupPassword.value,pw2=setupPassword2.value,pin=setupPin.value,err=lockError;
  if(pw.length<10){err.textContent='Geslo naj ima najmanj 10 znakov.';return}
  if(pw!==pw2){err.textContent='Gesli se ne ujemata.';return}
  if(!/^\d{6}$/.test(pin)){err.textContent='PIN mora imeti 6 številk.';return}
+ if(await dbGet('encryptedData')){err.textContent='Na napravi že obstajajo šifrirani podatki. Ne nastavljaj novega gesla; potrebna je obnovitev prejšnjih varnostnih nastavitev.';return}
  const salt=crypto.getRandomValues(new Uint8Array(16));
  sessionKey=await passwordKey(pw,salt); sessionPassword=pw;
  const ph=await hashSecret(pw), nh=await hashSecret(pin);
@@ -236,11 +250,14 @@ async function unlockApp(){
  try{
    const key=await passwordKey(pw,unb64(sec.kdfSalt),sec.kdfIterations||310000);
    const encrypted=await dbGet('encryptedData');
-   data=encrypted?await decryptObject(encrypted,key):{patients:[]};
+   if(!encrypted){err.textContent='Šifriranih podatkov v tej namestitvi ni. Ne ustvarjaj novih pacientov; najprej preveri prejšnjo različico ali varnostno kopijo.';return}
+   const loaded=await decryptObject(encrypted,key);
+   if(!loaded || !Array.isArray(loaded.patients))throw new Error('Neveljavna struktura kartoteke');
+   data=loaded;
    sessionKey=key;sessionPassword=pw;unlockValue.value='';err.textContent='';unlockSession();renderPatients();
  }catch(e){err.textContent='Podatkov ni bilo mogoče dešifrirati.'}
 }
-function unlockSession(){lockScreen.style.display='none';resetIdle()}
+function unlockSession(){lockScreen.style.display='none';resetIdle();const status=document.getElementById('storageStatus');if(status)status.textContent='Naloženih pacientov: '+data.patients.length+' · podatki so lokalni na tej napravi.'}
 function lockApp(hard=false){
  lockScreen.style.display='flex';unlockBox.style.display='block';setupBox.style.display='none';
  if(hard){sessionKey=null;sessionPassword=null;data={patients:[]};selected=null}
@@ -249,6 +266,7 @@ function resetIdle(){clearTimeout(idleTimer);if(lockScreen.style.display==='none
 ['pointerdown','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,resetIdle,{passive:true}));
 document.addEventListener('visibilitychange',()=>{if(document.hidden)lockApp(false)});
 async function initSecurity(){
+ if(!crypto?.subtle)throw new Error('Šifriranje ni na voljo. Odpri aplikacijo prek HTTPS.');
  const sec=await dbGet('security');
  setupBox.style.display=sec?'none':'block';unlockBox.style.display=sec?'block':'none';
 }
@@ -256,7 +274,7 @@ async function exportBackup(){
  if(!sessionPassword||!sessionKey){alert('Za šifrirano varnostno kopijo aplikacijo najprej odkleni z glavnim geslom.');return}
  await persist();
  const encrypted=await dbGet('encryptedData'),sec=await dbGet('security');
- const payload={app:'DOTIK Kartoteka',version:'3.0',encrypted:true,security:{kdfSalt:sec.kdfSalt,kdfIterations:sec.kdfIterations,password:sec.password,pin:sec.pin},data:encrypted};
+ const payload={app:'DOTIK Kartoteka',version:'3.2',encrypted:true,security:{kdfSalt:sec.kdfSalt,kdfIterations:sec.kdfIterations,password:sec.password,pin:sec.pin},data:encrypted};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DOTIK_SIFRIRAN_backup_'+new Date().toISOString().slice(0,10)+'.json';
  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
@@ -274,13 +292,14 @@ document.getElementById('backupFile')?.addEventListener('change',async function(
  this.value='';
 });
 
+function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function renderPatients(){let q=document.getElementById('search').value.toLowerCase();let list=data.patients.filter(p=>(p.name+' '+p.surname).toLowerCase().includes(q));document.getElementById('patients').innerHTML=list.length?list.map(p=>`<div class="patient ${selected===p.id?'active':''}" onclick="selectPatient('${p.id}')"><b>${esc(p.name)} ${esc(p.surname)}</b><div class="muted">${esc(p.problem||'Brez opisa')}</div></div>`).join(''):'<div class="empty">Ni strank.</div>'}
 function showNewPatient(){document.getElementById('welcome').classList.add('hide');document.getElementById('detail').classList.add('hide');document.getElementById('newPatient').classList.remove('hide')}
 function cancelNew(){document.getElementById('newPatient').classList.add('hide');document.getElementById(selected?'detail':'welcome').classList.remove('hide')}
-function savePatient(){let name=npName.value.trim(),surname=npSurname.value.trim();if(!name||!surname)return alert('Vpiši ime in priimek.');let p={id:Date.now().toString(),name,surname,phone:npPhone.value.trim(),email:npEmail.value.trim(),problem:npProblem.value.trim(),notes:npNotes.value.trim(),visits:[]};data.patients.push(p);persist();['npName','npSurname','npPhone','npEmail','npProblem','npNotes'].forEach(id=>document.getElementById(id).value='');selectPatient(p.id);renderPatients()}
+async function savePatient(){let name=npName.value.trim(),surname=npSurname.value.trim();if(!name||!surname)return alert('Vpiši ime in priimek.');let p={id:Date.now().toString(),name,surname,phone:npPhone.value.trim(),email:npEmail.value.trim(),problem:npProblem.value.trim(),notes:npNotes.value.trim(),visits:[]};data.patients.push(p);try{await persist()}catch(e){data.patients.pop();setStorageStatus('NAPAKA: pacient ni bil shranjen · '+e.message);alert('Shranjevanje ni uspelo: '+e.message);return}['npName','npSurname','npPhone','npEmail','npProblem','npNotes'].forEach(id=>document.getElementById(id).value='');selectPatient(p.id);renderPatients()}
 function selectPatient(id){selected=id;let p=data.patients.find(x=>x.id===id);document.getElementById('welcome').classList.add('hide');document.getElementById('newPatient').classList.add('hide');document.getElementById('detail').classList.remove('hide');pTitle.textContent=p.name+' '+p.surname;pMeta.textContent=[p.phone,p.email].filter(Boolean).join(' · ');pProblem.textContent=p.problem||'—';pNotes.textContent=p.notes||'—';hideVisit();renderVisits();renderPatients()}
 function showVisit(){visitForm.classList.remove('hide');vDate.value=new Date().toISOString().slice(0,10);currentPainMarks=[];renderPainMarks()} function hideVisit(){visitForm.classList.add('hide');currentPainMarks=[];renderPainMarks()}
-function saveVisit(){let p=data.patients.find(x=>x.id===selected);let v={id:Date.now().toString(),date:vDate.value,pain:vPain.value,subjective:vSubjective.value.trim(),objective:vObjective.value.trim(),treatment:vTreatment.value.trim(),response:vResponse.value.trim(),plan:vPlan.value.trim(),painMarks:currentPainMarks.map(m=>({...m}))};if(!v.date||!v.treatment)return alert('Vpiši datum in izvedeno terapijo.');p.visits.unshift(v);persist();['vPain','vSubjective','vObjective','vTreatment','vResponse','vPlan'].forEach(id=>document.getElementById(id).value='');hideVisit();renderVisits()}
+async function saveVisit(){let p=data.patients.find(x=>x.id===selected);let v={id:Date.now().toString(),date:vDate.value,pain:vPain.value,subjective:vSubjective.value.trim(),objective:vObjective.value.trim(),treatment:vTreatment.value.trim(),response:vResponse.value.trim(),plan:vPlan.value.trim(),painMarks:currentPainMarks.map(m=>({...m}))};if(!v.date||!v.treatment)return alert('Vpiši datum in izvedeno terapijo.');p.visits.unshift(v);try{await persist()}catch(e){p.visits.shift();setStorageStatus('NAPAKA: obisk ni bil shranjen · '+e.message);alert('Shranjevanje obiska ni uspelo: '+e.message);return}['vPain','vSubjective','vObjective','vTreatment','vResponse','vPlan'].forEach(id=>document.getElementById(id).value='');hideVisit();renderVisits()}
 function renderVisits(){let p=data.patients.find(x=>x.id===selected);visits.innerHTML=p.visits.length?p.visits.map(v=>`<div class="visit"><strong>${esc(v.date)}${v.pain!==''?' · NRS '+esc(v.pain)+'/10':''}</strong>${v.painMarks&&v.painMarks.length?`<div class="saved-chart"><div>${painSvg('front',v.painMarks)}<div class="muted" style="text-align:center">Spredaj</div></div><div>${painSvg('back',v.painMarks)}<div class="muted" style="text-align:center">Zadaj</div></div></div>`:''}${v.subjective?'<p><b>Stanje:</b> '+esc(v.subjective)+'</p>':''}${v.objective?'<p><b>Pregled:</b> '+esc(v.objective)+'</p>':''}<p><b>Terapija:</b> ${esc(v.treatment)}</p>${v.response?'<p><b>Odziv:</b> '+esc(v.response)+'</p>':''}${v.plan?'<p><b>Plan:</b> '+esc(v.plan)+'</p>':''}</div>`).join(''):'<div class="empty">Za to stranko še ni zabeleženih obiskov.</div>'}
 
 const markColors={pain:'#e53935',tension:'#f39c34',sensory:'#3288d1',other:'#8d58b5'};
@@ -312,7 +331,7 @@ document.getElementById('bodyBack').addEventListener('click',e=>addPainMark('bac
 
 
 
-initSecurity();
+initSecurity().catch(e=>{document.getElementById('lockError').textContent='Napaka pri odpiranju baze: '+e.message});
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./service-worker.js').catch(()=>{}));}
 
 </script>

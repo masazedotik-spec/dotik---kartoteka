@@ -1,10 +1,9 @@
-DOTIK Kartoteka v3.3 – TESTNA različica za preverjanje shranjevanja
+DOTIK Kartoteka v3.5 – fotografije in PDF priloge
 
-1. ZIP razširi in vseh 7 datotek naloži v glavno mapo istega GitHub repozitorija. Ne naloži ZIP kot eno datoteko.
-2. Na GitHubu klikni index.html in preveri, da naslov vsebuje v3.3. Počakaj na zeleno objavo GitHub Pages.
-3. Najprej preveri različico na računalniku, nato na iPadu. iPad lahko zaradi predpomnilnika še kaže staro različico.
-4. Ne briši nameščene aplikacije ali podatkov brskalnika. Po ponovnem zagonu uporabi GLAVNO GESLO.
-5. Ustvari izmišljenega pacienta. Preveri napis 'Preverjeno shranjeno v lokalno bazo', zapri in ponovno odpri.
-6. Varnostno kopijo preveri z obnovitvijo v LOČENEM testnem okolju, ne čez obstoječe podatke.
-
-OPOZORILO: To je nerevidiran prototip. Ni primeren za dejanske zdravstvene podatke pacientov. Samodejni test v iPad Safariju ni bil opravljen.
+Pred posodobitvijo izvozi in varno shrani šifrirano varnostno kopijo.
+Na GitHub naloži vseh 7 datotek iz te mape (ne ZIP), Commit changes.
+Ne briši ikone z iPada in ne briši podatkov Safarija.
+Odpri pacienta, uporabi Fotografiraj ali Dodaj sliko ali PDF.
+Slike se zmanjšajo na največ 1600 px in JPEG; PDF do 3 MB.
+Priloge so v šifrirani bazi in vključene v varnostno kopijo.
+Najprej preizkusi z izmišljenimi podatki; aplikacija ni varnostno revidirana za zdravstvene podatke.

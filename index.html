@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>DOTIK Kartoteka v3.3 Preizkus shranjevanja</title>
+<title>DOTIK Kartoteka v3.5 Fotografije in dokumenti</title>
 <style>
 :root{--g:#087f73;--gd:#075e57;--o:#ef7f61;--bg:#f4f7f6;--card:#fff;--txt:#16302d;--mut:#6c7d7a;--line:#dce6e3}
 *{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--txt)}
@@ -68,7 +68,7 @@ input,textarea,select{width:100%;padding:10px 11px;border:1px solid #cddbd8;bord
    <div id="lockError" class="lock-error"></div>
  </div>
 </div>
-<header><div class="brand">DOTIK <small>Kartoteka v3.3 · šifrirano · iPad Offline</small></div><div>Jernej Švab s.p.</div></header>
+<header><div class="brand">DOTIK <small>Kartoteka v3.5 · šifrirano · iPad Offline</small></div><div>Jernej Švab s.p.</div></header>
 <div class="wrap">
 <div class="notice"><b>DEMO:</b> Ta prototip podatke hrani samo v brskalniku in še ni namenjen resničnim zdravstvenim podatkom. Uporabi izmišljene testne osebe.</div>
 <br>
@@ -97,7 +97,16 @@ input,textarea,select{width:100%;padding:10px 11px;border:1px solid #cddbd8;bord
 <div class="row" style="margin-top:14px"><button class="btn primary" onclick="savePatient()">Shrani stranko</button><button class="btn ghost" onclick="cancelNew()">Prekliči</button></div>
 </section>
 <section id="detail" class="hide">
-<div class="card"><div class="row" style="justify-content:space-between"><div><h2 id="pTitle"></h2><div id="pMeta" class="muted"></div></div><button class="btn accent" onclick="showVisit()">+ Nov obisk</button></div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>Osnovna kartoteka</h3><p><b>Glavna težava:</b> <span id="pProblem"></span></p><p><b>Opombe:</b> <span id="pNotes"></span></p></div>
+<div class="card"><div class="row" style="justify-content:space-between"><div><h2 id="pTitle"></h2><div id="pMeta" class="muted"></div></div><div class="row"><button class="btn accent" onclick="showVisit()">+ Nov obisk</button><button type="button" class="btn ghost" style="color:#a32222" onclick="deleteSelectedPatient()">Izbriši pacienta</button></div></div><hr style="border:0;border-top:1px solid var(--line);margin:18px 0"><h3>Osnovna kartoteka</h3><p><b>Glavna težava:</b> <span id="pProblem"></span></p><p><b>Opombe:</b> <span id="pNotes"></span></p></div>
+<div class="card" style="margin-top:18px">
+<h3>Fotografije in dokumenti pacienta</h3>
+<p class="muted">Fotografiraj z iPadom ali dodaj sliko/PDF. Priloge se šifrirano shranijo v kartoteko in vključijo v varnostno kopijo. Fotografije se zaradi prostora zmanjšajo.</p>
+<div class="row">
+<label class="btn ghost" style="cursor:pointer">📷 Fotografiraj<input id="cameraAttachment" type="file" accept="image/*" capture="environment" style="display:none" onchange="addPatientAttachment(this)"></label>
+<label class="btn ghost" style="cursor:pointer">📎 Dodaj sliko ali PDF<input id="fileAttachment" type="file" accept="image/*,.pdf,application/pdf" style="display:none" onchange="addPatientAttachment(this)"></label>
+</div>
+<p id="attachmentStatus" class="muted" role="status"></p><div id="patientAttachments"></div>
+</div>
 <div id="visitForm" class="card hide" style="margin-top:18px"><h3>Nov obisk</h3>
 <div class="two"><div><label>Datum</label><input id="vDate" type="date"></div><div><label>Bolečina NRS 0–10</label><input id="vPain" type="number" min="0" max="10"></div></div>
 
@@ -274,7 +283,7 @@ async function exportBackup(){
  if(!sessionPassword||!sessionKey){alert('Za šifrirano varnostno kopijo aplikacijo najprej odkleni z glavnim geslom.');return}
  await persist();
  const encrypted=await dbGet('encryptedData'),sec=await dbGet('security');
- const payload={app:'DOTIK Kartoteka',version:'3.2',encrypted:true,security:{kdfSalt:sec.kdfSalt,kdfIterations:sec.kdfIterations,password:sec.password,pin:sec.pin},data:encrypted};
+ const payload={app:'DOTIK Kartoteka',version:'3.5',encrypted:true,security:{kdfSalt:sec.kdfSalt,kdfIterations:sec.kdfIterations,password:sec.password,pin:sec.pin},data:encrypted};
  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='DOTIK_SIFRIRAN_backup_'+new Date().toISOString().slice(0,10)+'.json';
  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
@@ -297,7 +306,100 @@ function renderPatients(){let q=document.getElementById('search').value.toLowerC
 function showNewPatient(){document.getElementById('welcome').classList.add('hide');document.getElementById('detail').classList.add('hide');document.getElementById('newPatient').classList.remove('hide')}
 function cancelNew(){document.getElementById('newPatient').classList.add('hide');document.getElementById(selected?'detail':'welcome').classList.remove('hide')}
 async function savePatient(){let name=npName.value.trim(),surname=npSurname.value.trim();if(!name||!surname)return alert('Vpiši ime in priimek.');let p={id:Date.now().toString(),name,surname,phone:npPhone.value.trim(),email:npEmail.value.trim(),problem:npProblem.value.trim(),notes:npNotes.value.trim(),visits:[]};data.patients.push(p);try{await persist()}catch(e){data.patients.pop();setStorageStatus('NAPAKA: pacient ni bil shranjen · '+e.message);alert('Shranjevanje ni uspelo: '+e.message);return}['npName','npSurname','npPhone','npEmail','npProblem','npNotes'].forEach(id=>document.getElementById(id).value='');selectPatient(p.id);renderPatients()}
-function selectPatient(id){selected=id;let p=data.patients.find(x=>x.id===id);document.getElementById('welcome').classList.add('hide');document.getElementById('newPatient').classList.add('hide');document.getElementById('detail').classList.remove('hide');pTitle.textContent=p.name+' '+p.surname;pMeta.textContent=[p.phone,p.email].filter(Boolean).join(' · ');pProblem.textContent=p.problem||'—';pNotes.textContent=p.notes||'—';hideVisit();renderVisits();renderPatients()}
+function selectPatient(id){selected=id;let p=data.patients.find(x=>x.id===id);document.getElementById('welcome').classList.add('hide');document.getElementById('newPatient').classList.add('hide');document.getElementById('detail').classList.remove('hide');pTitle.textContent=p.name+' '+p.surname;pMeta.textContent=[p.phone,p.email].filter(Boolean).join(' · ');pProblem.textContent=p.problem||'—';pNotes.textContent=p.notes||'—';hideVisit();renderVisits();renderPatientAttachments();renderPatients()}
+async function deleteSelectedPatient(){
+  if(!sessionKey){alert('Najprej odkleni aplikacijo z glavnim geslom.');return}
+  const id=selected;
+  const patient=data.patients.find(p=>p.id===id);
+  if(!patient){alert('Pacient ni izbran.');return}
+  const fullName=(patient.name+' '+patient.surname).trim();
+  const count=Array.isArray(patient.visits)?patient.visits.length:0;
+  const typed=prompt('POZOR: trajno bo izbrisana kartoteka '+fullName+' in vseh '+count+' obravnav.\n\nZa potrditev natančno vpiši ime in priimek pacienta:', '');
+  if(typed===null)return;
+  if(typed.trim()!==fullName){alert('Ime in priimek se ne ujemata. Brisanje je preklicano.');return}
+  if(!confirm('Res želiš trajno izbrisati '+fullName+' in vse njegove obravnave?'))return;
+  const previous=data.patients.slice();
+  data.patients=data.patients.filter(p=>p.id!==id);
+  try{await persist()}catch(e){
+    data.patients=previous;
+    setStorageStatus('NAPAKA: brisanje ni bilo uspešno · '+e.message);
+    alert('Brisanje ni uspelo: '+e.message);return;
+  }
+  selected=null;
+  document.getElementById('detail').classList.add('hide');
+  document.getElementById('newPatient').classList.add('hide');
+  document.getElementById('welcome').classList.remove('hide');
+  renderPatients();
+  alert('Kartoteka pacienta '+fullName+' je izbrisana iz trenutne lokalne baze. Stare varnostne kopije jo lahko še vsebujejo.');
+}
+// Priloge so del istega šifriranega objekta pacienta (IndexedDB / AES-GCM).
+const MAX_PDF_BYTES=3*1024*1024, MAX_IMAGE_BYTES=15*1024*1024;
+let attachmentBusy=false;
+function attachmentMessage(message){document.getElementById('attachmentStatus').textContent=message}
+function fileToDataURL(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('Datoteke ni bilo mogoče prebrati.'));reader.readAsDataURL(file)})}
+function loadImage(dataURL){return new Promise((resolve,reject)=>{const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('Slike ni mogoče odpreti.'));img.src=dataURL})}
+async function prepareAttachment(file){
+ const isImage=file.type.startsWith('image/'), isPDF=file.type==='application/pdf'||/\.pdf$/i.test(file.name);
+ if(!isImage&&!isPDF)throw new Error('Dovoljene so samo slike in PDF.');
+ if(isImage){
+   if(file.size>MAX_IMAGE_BYTES)throw new Error('Slika je prevelika (največ 15 MB pred zmanjšanjem).');
+   const img=await loadImage(await fileToDataURL(file));
+   const ratio=Math.min(1,1600/Math.max(img.naturalWidth,img.naturalHeight));
+   const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.naturalWidth*ratio));canvas.height=Math.max(1,Math.round(img.naturalHeight*ratio));
+   canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+   const url=canvas.toDataURL('image/jpeg',0.76);
+   if(url.length>4*1024*1024)throw new Error('Slika je tudi po zmanjšanju prevelika.');
+   return {id:crypto.randomUUID(),name:file.name.replace(/\.[^.]+$/,'')+'.jpg',type:'image/jpeg',url,created:new Date().toISOString()};
+ }
+ if(file.size>MAX_PDF_BYTES)throw new Error('PDF je prevelik (največ 3 MB).');
+ return {id:crypto.randomUUID(),name:file.name,type:'application/pdf',url:await fileToDataURL(file),created:new Date().toISOString()};
+}
+async function addPatientAttachment(input){
+ const file=input.files&&input.files[0];input.value='';if(!file||attachmentBusy)return;
+ const id=selected,patient=data.patients.find(p=>p.id===id);
+ if(!patient||!sessionKey){alert('Najprej odpri pacienta in odkleni aplikacijo.');return}
+ attachmentBusy=true;attachmentMessage('Pripravljam in šifrirano shranjujem datoteko ...');
+ try{
+   const attachment=await prepareAttachment(file);
+   if(selected!==id)throw new Error('Med dodajanjem se je zamenjal pacient. Poskusi znova.');
+   patient.attachments=Array.isArray(patient.attachments)?patient.attachments:[];
+   patient.attachments.push(attachment);
+   try{await persist()}catch(e){patient.attachments.pop();throw e}
+   attachmentMessage('Priloga je preverjeno shranjena.');renderPatientAttachments();
+ }catch(e){attachmentMessage('NAPAKA: '+e.message);alert('Priloge ni bilo mogoče shraniti: '+e.message)}
+ finally{attachmentBusy=false}
+}
+function renderPatientAttachments(){
+ const container=document.getElementById('patientAttachments');container.replaceChildren();
+ const patient=data.patients.find(p=>p.id===selected);if(!patient)return;
+ const attachments=Array.isArray(patient.attachments)?patient.attachments:[];
+ if(!attachments.length){const empty=document.createElement('p');empty.className='muted';empty.textContent='Ni pripetih fotografij ali dokumentov.';container.append(empty);return}
+ attachments.forEach(a=>{
+   const item=document.createElement('div');item.className='patient';
+   if(a.type==='image/jpeg'&&typeof a.url==='string'&&a.url.startsWith('data:image/jpeg;base64,')){
+     const img=document.createElement('img');img.src=a.url;img.alt='Fotografija: '+a.name;img.style.cssText='display:block;max-width:100%;max-height:230px;border-radius:9px;margin-bottom:8px';item.append(img);
+   }
+   const name=document.createElement('div');name.textContent=a.name+' · '+(a.created?new Date(a.created).toLocaleDateString('sl-SI'):'');item.append(name);
+   const buttons=document.createElement('div');buttons.className='row';buttons.style.marginTop='8px';
+   const download=document.createElement('button');download.type='button';download.className='btn ghost';download.textContent='Odpri / shrani';download.onclick=()=>downloadPatientAttachment(a.id);
+   const del=document.createElement('button');del.type='button';del.className='btn ghost';del.textContent='Izbriši prilogo';del.onclick=()=>deletePatientAttachment(a.id);
+   buttons.append(download,del);item.append(buttons);container.append(item);
+ });
+}
+function downloadPatientAttachment(id){
+ const p=data.patients.find(p=>p.id===selected),a=p?.attachments?.find(a=>a.id===id);if(!a)return;
+ if(!/^data:(image\/jpeg|application\/pdf);base64,/.test(a.url))return alert('Nepodprta oblika priloge.');
+ const bytes=unb64(a.url.split(',')[1]);const blob=new Blob([bytes],{type:a.type});const url=URL.createObjectURL(blob);
+ const link=document.createElement('a');link.href=url;link.download=a.name;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
+}
+async function deletePatientAttachment(id){
+ if(attachmentBusy)return;
+ const p=data.patients.find(p=>p.id===selected),a=p?.attachments?.find(a=>a.id===id);if(!a)return;
+ if(!confirm('Res izbrišem prilogo »'+a.name+'« iz kartoteke?'))return;
+ const old=p.attachments.slice();p.attachments=p.attachments.filter(x=>x.id!==id);
+ try{await persist();renderPatientAttachments();attachmentMessage('Priloga je izbrisana iz trenutne kartoteke.')}catch(e){p.attachments=old;alert('Brisanje ni uspelo: '+e.message)}
+}
+
 function showVisit(){visitForm.classList.remove('hide');vDate.value=new Date().toISOString().slice(0,10);currentPainMarks=[];renderPainMarks()} function hideVisit(){visitForm.classList.add('hide');currentPainMarks=[];renderPainMarks()}
 async function saveVisit(){let p=data.patients.find(x=>x.id===selected);let v={id:Date.now().toString(),date:vDate.value,pain:vPain.value,subjective:vSubjective.value.trim(),objective:vObjective.value.trim(),treatment:vTreatment.value.trim(),response:vResponse.value.trim(),plan:vPlan.value.trim(),painMarks:currentPainMarks.map(m=>({...m}))};if(!v.date||!v.treatment)return alert('Vpiši datum in izvedeno terapijo.');p.visits.unshift(v);try{await persist()}catch(e){p.visits.shift();setStorageStatus('NAPAKA: obisk ni bil shranjen · '+e.message);alert('Shranjevanje obiska ni uspelo: '+e.message);return}['vPain','vSubjective','vObjective','vTreatment','vResponse','vPlan'].forEach(id=>document.getElementById(id).value='');hideVisit();renderVisits()}
 function renderVisits(){let p=data.patients.find(x=>x.id===selected);visits.innerHTML=p.visits.length?p.visits.map(v=>`<div class="visit"><strong>${esc(v.date)}${v.pain!==''?' · NRS '+esc(v.pain)+'/10':''}</strong>${v.painMarks&&v.painMarks.length?`<div class="saved-chart"><div>${painSvg('front',v.painMarks)}<div class="muted" style="text-align:center">Spredaj</div></div><div>${painSvg('back',v.painMarks)}<div class="muted" style="text-align:center">Zadaj</div></div></div>`:''}${v.subjective?'<p><b>Stanje:</b> '+esc(v.subjective)+'</p>':''}${v.objective?'<p><b>Pregled:</b> '+esc(v.objective)+'</p>':''}<p><b>Terapija:</b> ${esc(v.treatment)}</p>${v.response?'<p><b>Odziv:</b> '+esc(v.response)+'</p>':''}${v.plan?'<p><b>Plan:</b> '+esc(v.plan)+'</p>':''}</div>`).join(''):'<div class="empty">Za to stranko še ni zabeleženih obiskov.</div>'}

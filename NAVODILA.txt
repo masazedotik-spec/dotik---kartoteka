@@ -1,9 +1,7 @@
-DOTIK Kartoteka v3.5 – fotografije in PDF priloge
+DOTIK Kartoteka v3.6 – manjše vizualno izboljšanje
 
-Pred posodobitvijo izvozi in varno shrani šifrirano varnostno kopijo.
-Na GitHub naloži vseh 7 datotek iz te mape (ne ZIP), Commit changes.
-Ne briši ikone z iPada in ne briši podatkov Safarija.
-Odpri pacienta, uporabi Fotografiraj ali Dodaj sliko ali PDF.
-Slike se zmanjšajo na največ 1600 px in JPEG; PDF do 3 MB.
-Priloge so v šifrirani bazi in vključene v varnostno kopijo.
-Najprej preizkusi z izmišljenimi podatki; aplikacija ni varnostno revidirana za zdravstvene podatke.
+Odstranjen je velik DEMO napis. Varnostna omejitev je še vedno navedena pod razdelkom Informacije o varnosti in omejitvah aplikacije.
+
+Pred posodobitvijo izvozi varnostno kopijo. Naloži vseh sedem datotek v GitHub repozitorij, ne samega ZIP-a. Ne odstranjuj aplikacije z iPada in ne briši podatkov brskalnika.
+
+Aplikacija ni neodvisno varnostno preverjena za dejanske zdravstvene podatke.

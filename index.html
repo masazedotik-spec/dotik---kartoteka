@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>DOTIK Kartoteka v3.5 Fotografije in dokumenti</title>
+<title>DOTIK Kartoteka v3.6 Fotografije in dokumenti</title>
 <style>
 :root{--g:#087f73;--gd:#075e57;--o:#ef7f61;--bg:#f4f7f6;--card:#fff;--txt:#16302d;--mut:#6c7d7a;--line:#dce6e3}
 *{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--txt)}
@@ -68,10 +68,8 @@ input,textarea,select{width:100%;padding:10px 11px;border:1px solid #cddbd8;bord
    <div id="lockError" class="lock-error"></div>
  </div>
 </div>
-<header><div class="brand">DOTIK <small>Kartoteka v3.5 · šifrirano · iPad Offline</small></div><div>Jernej Švab s.p.</div></header>
+<header><div class="brand">DOTIK <small>Kartoteka v3.6 · šifrirano · iPad Offline</small></div><div>Jernej Švab s.p.</div></header>
 <div class="wrap">
-<div class="notice"><b>DEMO:</b> Ta prototip podatke hrani samo v brskalniku in še ni namenjen resničnim zdravstvenim podatkom. Uporabi izmišljene testne osebe.</div>
-<br>
 <div class="grid">
 <aside class="card">
 <div class="row" style="justify-content:space-between;align-items:center"><h2>Stranke</h2><button class="btn primary" onclick="showNewPatient()">+ Nova</button></div>
@@ -79,6 +77,7 @@ input,textarea,select{width:100%;padding:10px 11px;border:1px solid #cddbd8;bord
 <div id="patients"></div><p id="storageStatus" class="muted" role="status" style="font-size:12px;margin-top:12px"></p>
 </aside>
 <main><div class="local-banner"><b>🔒 Samo na napravi:</b> kartoteke se hranijo lokalno v podatkovni bazi IndexedDB. Aplikacija sama podatkov ne pošilja v cloud. Za iPad jo odpri v Safariju in izberi <b>Deli → Add to Home Screen / Dodaj na začetni zaslon</b>. Redno izvozi varnostno kopijo in jo shrani na varen šifriran medij.</div>
+<details style="margin:8px 0 14px;font-size:12px;color:var(--mut)"><summary style="cursor:pointer">Informacije o varnosti in omejitvah aplikacije</summary><p>Ta različica je še vedno testni prototip in ni neodvisno varnostno preverjena za resnične zdravstvene podatke. Podatki se hranijo lokalno na tej napravi; redno izdeluj šifrirane varnostne kopije in jih varno shrani. Za zdaj uporabljaj le izmišljene testne osebe.</p></details>
 <div class="security-row">
 <button type="button" class="btn ghost" onclick="lockApp()">🔒 Zakleni zdaj (PIN za hitro odklepanje)</button>
 <span class="chart-note">Samodejni zaklep po 5 minutah neaktivnosti.</span>
